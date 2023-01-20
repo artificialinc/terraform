@@ -44,13 +44,13 @@ const (
 	DataResourceMode    = "data"
 )
 
-// Plan is the top-level representation of the json format of a plan. It includes
+// Plan is the top-level representation of the json format of a Plan. It includes
 // the complete config and current state.
-type plan struct {
+type Plan struct {
 	FormatVersion    string      `json:"format_version,omitempty"`
 	TerraformVersion string      `json:"terraform_version,omitempty"`
-	Variables        variables   `json:"variables,omitempty"`
-	PlannedValues    stateValues `json:"planned_values,omitempty"`
+	Variables        Variables   `json:"variables,omitempty"`
+	PlannedValues    StateValues `json:"planned_values,omitempty"`
 	// ResourceDrift and ResourceChanges are sorted in a user-friendly order
 	// that is undefined at this time, but consistent.
 	ResourceDrift      []ResourceChange  `json:"resource_drift,omitempty"`
@@ -62,8 +62,8 @@ type plan struct {
 	Checks             json.RawMessage   `json:"checks,omitempty"`
 }
 
-func newPlan() *plan {
-	return &plan{
+func newPlan() *Plan {
+	return &Plan{
 		FormatVersion: FormatVersion,
 	}
 }
@@ -130,9 +130,9 @@ type output struct {
 	Value     json.RawMessage `json:"value,omitempty"`
 }
 
-// variables is the JSON representation of the variables provided to the current
+// Variables is the JSON representation of the Variables provided to the current
 // plan.
-type variables map[string]*variable
+type Variables map[string]*variable
 
 type variable struct {
 	Value json.RawMessage `json:"value,omitempty"`
@@ -269,8 +269,8 @@ func Marshal(
 	return ret, err
 }
 
-func (p *plan) marshalPlanVariables(vars map[string]plans.DynamicValue, decls map[string]*configs.Variable) error {
-	p.Variables = make(variables, len(vars))
+func (p *Plan) marshalPlanVariables(vars map[string]plans.DynamicValue, decls map[string]*configs.Variable) error {
+	p.Variables = make(Variables, len(vars))
 
 	for k, v := range vars {
 		val, err := v.Decode(cty.DynamicPseudoType)
@@ -593,7 +593,7 @@ func MarshalOutputChanges(changes *plans.Changes) (map[string]Change, error) {
 	return outputChanges, nil
 }
 
-func (p *plan) marshalPlannedValues(changes *plans.Changes, schemas *terraform.Schemas) error {
+func (p *Plan) marshalPlannedValues(changes *plans.Changes, schemas *terraform.Schemas) error {
 	// marshal the planned changes into a module
 	plan, err := marshalPlannedValues(changes, schemas)
 	if err != nil {
@@ -611,7 +611,7 @@ func (p *plan) marshalPlannedValues(changes *plans.Changes, schemas *terraform.S
 	return nil
 }
 
-func (p *plan) marshalRelevantAttrs(plan *plans.Plan) error {
+func (p *Plan) marshalRelevantAttrs(plan *plans.Plan) error {
 	for _, ra := range plan.RelevantAttributes {
 		addr := ra.Resource.String()
 		path, err := encodePath(ra.Attr)
